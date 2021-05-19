@@ -268,6 +268,7 @@ func (co *ConvertOptions) RunConvert() (err error) {
 	// 2. label nodes as cloud node or edge node
 	var edgeNodeNames []string
 	for _, node := range nodeLst.Items {
+		klog.Infof("joez: check node %s", node.GetName())
 		if strutil.IsInStringLst(co.CloudNodes, node.GetName()) {
 			// label node as cloud node
 			klog.Infof("mark %s as the cloud-node", node.GetName())

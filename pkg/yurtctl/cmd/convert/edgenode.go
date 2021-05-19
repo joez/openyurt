@@ -187,6 +187,7 @@ func (c *ConvertEdgeNodeOptions) RunConvertEdgeNode() (err error) {
 		return err
 	}
 	if len(c.EdgeNodes) > 1 || len(c.EdgeNodes) == 1 && c.EdgeNodes[0] != nodeName {
+		klog.Infof("joez: remote edgenode convert for %s", nodeName)
 		// 2 remote edgenode convert
 		nodeLst, err := c.clientSet.CoreV1().Nodes().List(context.Background(), metav1.ListOptions{})
 		if err != nil {
@@ -244,6 +245,7 @@ func (c *ConvertEdgeNodeOptions) RunConvertEdgeNode() (err error) {
 		}
 	} else {
 		// 3. local edgenode convert
+		klog.Infof("joez: local edgenode convert for %s", nodeName)
 		node, err := c.clientSet.CoreV1().Nodes().Get(context.Background(), nodeName, metav1.GetOptions{})
 		if err != nil {
 			return err
@@ -277,6 +279,7 @@ func (c *ConvertEdgeNodeOptions) RunConvertEdgeNode() (err error) {
 				return err
 			}
 		}
+		klog.Infof("joez: interval:%v, timeout:%v", hubHealthzCheckFrequency, c.YurthubHealthCheckTimeout)
 		err = c.SetupYurthub()
 		if err != nil {
 			return fmt.Errorf("fail to set up the yurthub pod: %v", err)
@@ -327,6 +330,7 @@ func (c *ConvertEdgeNodeOptions) SetupYurthub() error {
 	klog.Infof("create the %s/yurt-hub.yaml", c.PodMainfestPath)
 
 	// 2. wait yurthub pod to be ready
+	klog.Infof("hubHealthcheck: interval:%v, timeout:%v", hubHealthzCheckFrequency, c.YurthubHealthCheckTimeout)
 	err = hubHealthcheck(c.YurthubHealthCheckTimeout)
 	return err
 }
@@ -405,10 +409,13 @@ func hubHealthcheck(timeout time.Duration) error {
 	serverHealthzURL.Path = enutil.ServerHealthzURLPath
 
 	start := time.Now()
+	klog.Infof("joez: hubHealthcheck: interval:%v, timeout:%v", hubHealthzCheckFrequency, timeout)
+
 	return wait.PollImmediate(hubHealthzCheckFrequency, timeout, func() (bool, error) {
 		_, err := pingClusterHealthz(http.DefaultClient, serverHealthzURL.String())
 		if err != nil {
 			klog.Infof("yurt-hub is not ready, ping cluster healthz with result: %v", err)
+			klog.Infof("joez: yurt-hub is not ready, interval:%v, timeout:%v", hubHealthzCheckFrequency, timeout)
 			return false, nil
 		}
 		klog.Infof("yurt-hub healthz is OK after %f seconds", time.Since(start).Seconds())
